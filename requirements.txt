@@ -1,2 +1,2 @@
-+vpnotebook
-+vpython
+vpnotebook
+vpython
