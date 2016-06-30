@@ -6,7 +6,7 @@
 -> 3D animation
 	* VPython
 -> 2D (graphical)
-	* Bokeh?
+	* Bokeh (No inbuilt animation)
 	* Matplotlib
 -> Widgets
 	* ipywidgets
