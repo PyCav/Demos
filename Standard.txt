@@ -1,0 +1,24 @@
+- Demos/Teaching resources
+	* Jupyter
+	* \LaTeX?
+
+- Visualization
+-> 3D animation
+	* VPython
+-> 2D (graphical)
+	* Bokeh?
+	* Matplotlib
+-> Widgets
+	* ipywidgets
+
+- Experimental/Practical
+	* Jupyter
+	* Bokeh/Matplotlib?
+
+- Investigations
+	* Python script with PyCav lib
+	* Python 2/3
+
+PyCav
+	* Vpython demos
+	* Wavefunction class
