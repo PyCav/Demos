@@ -7,8 +7,9 @@ def decay_cycle(N_t,N,N_d,P,data):
 		for j in range(N):
 			for k in range(N_d):
 				if rand[j] < P[k]:
-					data[j,i:] = data[j,i:] + 1.0
-					break
+					if data[j,i] < N_d:
+						data[j,i:] = data[j,i:] + 1.0
+						break
 	return data
 
 def counter(N_t,N_d,data):
