@@ -20,3 +20,7 @@ git status
 git clone <url>
 git branch <branch-name>
 git checkout <branch-name>
+
+* Updating your branch from master
+- Only do this once your modified files have been pushed to master
+git rebase
