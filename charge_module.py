@@ -7,27 +7,6 @@ from IPython.display import display
 import ipywidgets as widgets
 from ipywidgets import interact, FloatSlider
 
-from tempfile import NamedTemporaryFile
-
-VIDEO_TAG = """<video controls>
- <source src="data:video/x-m4v;base64,{0}" type="video/mp4">
- Your browser does not support the video tag.
-</video>"""
-
-def anim_to_html(anim):
-    if not hasattr(anim, '_encoded_video'):
-        with NamedTemporaryFile(suffix='.mp4') as f:
-            anim.save(f.name, fps=20, extra_args=['-vcodec', 'libx264'])
-            video = open(f.name, "rb").read()
-        anim._encoded_video = video.encode("base64")
-    
-    return VIDEO_TAG.format(anim._encoded_video)
-
-from IPython.display import HTML
-
-def display_animation(anim):
-    plt.close(anim._fig)
-    return HTML(anim_to_html(anim))
 
 def rk4(R,V,a,h,ring_r,ring_steps,q):
 	# Function to time step using the Runge-Kutta 4th order algorithm
@@ -208,7 +187,7 @@ class Animation(object):
 			print('No FuncAnimation to stop')
 		# Create animation object which calls nextframe function in 100ms intervals
 		self.animate = anim.FuncAnimation(self.fig, nextframe, int(self.N/self.N_output), interval = 100, blit = False)
-		display_animation(self.animate)
+		plt.show()
 
 	def t_onoff(self,val):
 		# On button press, change values of trace bool
