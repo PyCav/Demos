@@ -3,6 +3,7 @@ from __future__ import division, print_function
 from vpython import *
 import numpy as np
 
+
 def _element(vec,at):
 	"""
 	Finds element of vpython vector at a certain index, specified by at, because getting the index of a vpython vector wasn't working
@@ -13,7 +14,7 @@ def _element(vec,at):
 	at : integer
 		Component of vector that you want to find
 	"""
-	
+
 	if at == 0:
 		return vec.x
 	elif at == 1:
@@ -78,7 +79,7 @@ class Particle(sphere):
 		sphere.__init__(self,pos = pos, velocity = velocity, radius = radius, make_trail = False, color = color)
 		self.velocity = velocity
 		self.inverse_mass = inverse_mass
-	
+
 	def increment_by(self,pos_increment, velocity_increment):
 		'''
 		Function to increment coordinates and velocity at the same time.
@@ -91,18 +92,18 @@ class Particle(sphere):
 		'''
 		self.pos += pos_increment
 		self.velocity += velocity_increment
-		
+
 
 class Container(box):
 	"""
 	Class describing a cubic container for particles to be in
 	"""
-	
+
 	@property
 	def dimension(self):
 		"""Property which stores the dimensions of the cube"""
 		return self._dimension
-		
+
 	@dimension.setter
 	def dimension(self,dimension):
 		"""Setter so that the width, legth, and height are updated when the dimension property is set"""
@@ -110,12 +111,13 @@ class Container(box):
 		self.length = dimension
 		self.width = dimension
 		self.height = dimension
-		
+		self.size_changed = True
+
 	@property
 	def surface_area(self):
 		"""Property which describes the total surface area of the container"""
 		return 6*(self.dimension)**2
-	
+
 	def __init__(self, dimension):
 		"""
 		Parameters
@@ -125,7 +127,8 @@ class Container(box):
 		"""
 		box.__init__(self,pos = vector(0,0,0), length = dimension, height = dimension, width = dimension, opacity = 0.3)
 		self.dimension = dimension
-	
+		self.size_changed = False
+
 	def is_outside_container(self,particle):
 		"""
 		Returns None if is inside container, returns the index of the axis along which it is outside the cotainer if it is outside the container
@@ -138,18 +141,47 @@ class Container(box):
 			if abs(_element(particle.pos,at=i))  > self.length/2 - particle.radius:
 				return i
 		return None
-		
-	def random_position_inside(self):
-		l = self.dimension
-		return vector(l*random() - l/2, l*random() - l/2,l*random() - l/2)
-		
 
-	
+
+
+
+class Domain(object):
+	"""
+	Class to specify "domains" which the containers are split into for more efficient collision detection, allowing what seems like roughly O(n) collision detection.
+	"""
+	def __init__(self, pos, dimension):
+		"""
+		Parameters
+		----------
+		dimension: float
+			The dimension of the cube, i.e. the length, width, height of the cube
+		pos: vpython vector
+			Position of "origin" vertex of cube	
+		"""
+		self.pos = pos
+		self.dimension = dimension
+		self.particles = []
+
+	def contains(self,particle):
+		"""
+		Returns True or False, depending on whether the particle is in the domain or not.
+		Parameters
+		----------
+		particle: Particle
+			The particle that is being checked to see if is contained in the domain.
+		"""
+		relative_pos = particle.pos - self.pos
+		for i in range(0,3):
+			if _element(relative_pos,at=i) > self.dimension or _element(relative_pos,at=i)<0:
+				return False
+		return True
+
+
 class System(object):
 	"""
 	Class which describes a system composed of a number of Particles in a container
 	"""
-	def __init__(self, average_speed, number_of_particles, particle_radius, container, inverse_mass = 1, collides = True, record_pressure = False):
+	def __init__(self, average_speed, number_of_particles, particle_radius, container, inverse_mass = 1, collides = True, record_pressure = False, record_1d_velocities = False, record_speeds = False):
 		"""
 		Parameters
 		----------
@@ -167,6 +199,10 @@ class System(object):
 			Determines whether the particles will collide with each other or not. (If they don't collide, this simulates an ideal gas.
 		record_pressure: Boolean
 			Determines whether the pressure on the container will be recorded
+		record_1d_velocities: Boolean
+			Determines whether the system will record the velocities along the x component. It is recorded as an unsorted list.
+		record_speeds: Boolean
+			Determines whether the system will record the speeds of the particles. It is recorded as an unsorted list.
 		"""
 		#Setting variables
 		self.collides = collides
@@ -180,17 +216,28 @@ class System(object):
 		self.pressure = 0 #Pressure is set to 0 at the start
 		self.steps = 0 #Number of steps taken, is set to 0 at the start
 		self.pressure_history = [] #History of instantaneous values of pressure
-		
+		self.record_1d_velocities = record_1d_velocities
+		self.one_d_velocities = np.zeros(number_of_particles)
+		self.record_speeds = record_speeds
+		self.speeds = np.zeros(number_of_particles)
+		self.domains = []
+
 		#For loop below adds number_of_particles random particles
 		for i in range(0,number_of_particles):
 			self.particles.append(self._random_particle(average_speed))
-			
+		
+		#If collision detection between particles is on, the container is split into domains.
+		if self.collides:
+			self._setup_domains()
+			self._assign_particles_to_domains()
+		
 		#Last particle makes a trail to make the motion obvious
 		self.particles[0].make_trail = True
 		self.particles[0].retain = 50
 		self.particles[0].color = color.blue
+		
 
-	
+
 	def simulate(self, dt = 0.01):
 		"""
 		Simulates the system going forwards by a time step dt by checking for collisions (with other particles if collides is True, and always with walls), and then steps time forwards. Also records pressure if record_pressure is True
@@ -199,17 +246,29 @@ class System(object):
 		dt: float
 			Determines the amount of time by which the system should step forwards
 		"""
-		momenta_change = 0.
+		#Collision detection between particles using domains: Only checks if two particles have collided if they are in the same domain.
+		if self.collides:
+			#Remake domains if the container's size has changed
+			if self.container.size_changed == True:
+				self._setup_domains()
+				self._assign_particles_to_domains()
+				self.container.size_changed = False
+			#Assign particles to domains every 3 steps (Don't need to do every step, as particles are unlikely to move to different domains in 3 steps time. Needs changing depending on the velocity of the particles)
+			if self.steps % 3 == 0:
+				self._assign_particles_to_domains()
+				
+			#The actual collision detection
+			for domain in self.domains:
+				for index_1,particle_1 in enumerate(domain.particles):
+					for index_2, particle_2 in enumerate(domain.particles):
+						if (index_2 > index_1):
+							collided = self._collided(particle_1,particle_2)
+							if collided:
+								self._collision(particle_1, particle_2)
 		
+		momenta_change = 0.
 		#Go through all the particles
 		for (index,particle) in enumerate(self.particles):
-			
-			#Check for collisions with other particles if collides is True
-			if self.collides:
-				other_particle = self._check_collisions_for_particle(index,particle)
-				if other_particle is not None:
-					self._collision(particle,other_particle)
-					
 			#Check for collisions with walls
 			wall_collision_index = self.container.is_outside_container(particle)
 			if wall_collision_index is not None:
@@ -223,28 +282,62 @@ class System(object):
 		if self.record_pressure and self.steps > 200:
 			instantaneous_pressure = (momenta_change/dt)/self.container.surface_area
 			self._update_pressure(instantaneous_pressure)
+		# Record the 1d velocity
+		if self.record_1d_velocities:
+			self._update_1d_velocities()
+		# Record the speeds
+		if self.record_speeds:
+			self._update_speeds()
 		self._step_time(dt)
 
-	
-	
-	def _check_collisions_for_particle(self,index,particle):
+	def _collided(self,particle_1,particle_2):
 		"""
-		Checks whether a particle at a certain index is colliding with any other particle. Returns None if didn't collide with anything, returns particle it collided with if it did collide
+		Checks if two particles have collided, returns true if they have, false if they haven't.
 		Parameters
 		----------
-		index: integer
-			Index of particle being checked. This is used so that this function only checks forwards from the particle, as else each pair of particles would check for collisions twice. Set to zero to check with all particles in the system
-		particle: Particle
-			Particle which is being checked for collisions
+		particle_1: Particle
+			First particle that is being checked for collision
+		particle_2: Particle
+			The particle that particle_1 is being checked for a collision with
 		"""
-		for index2, other_particle in enumerate(self.particles):
-			if index2 > index:
-				distance = (other_particle.pos - particle.pos).mag
-				# If the two particles overlap, then a collision is detected:
-				if distance <= other_particle.radius + particle.radius: 
-					return other_particle
-		return None
-		
+		distance = (particle_2.pos - particle_1.pos).mag
+		# If the two particles overlap, then a collision is detected:
+		if distance <= particle_2.radius + particle_1.radius: 
+			return True
+		return False
+
+	def _setup_domains(self):
+		"""
+		Sets up domains in the container. So that the algorithm functions, don't make the domain_size any less than 2r, and the step should be smaller than domain_size by at least 1 particle_radius. The actual values chosen here are just what seem to work well, do tinker with them
+		"""
+		self.domain_size = self.particle_radius * 17
+		step = self.particle_radius * 15.5
+		x1 = np.arange(- self.container.dimension/2,(1.05 * self.container.dimension)/2,step)
+		x2 = np.arange(- self.container.dimension/2,(1.05 * self.container.dimension)/2,step)
+		x3 = np.arange(- self.container.dimension/2,(1.05 * self.container.dimension)/2,step)
+		x, y, z = np.meshgrid(x1, x2, x3)
+		self._setup_domains_helper(self,x,y,z)
+		self._assign_particles_to_domains()
+
+	@np.vectorize
+	def _setup_domains_helper(self,x,y,z):
+		"""
+		Helper function for setup_domains(), made so that @np.vectorize can be used for faster execution
+		"""
+		pos = vector(x, y, z)
+		self.domains.append(Domain(pos, self.domain_size))
+
+	def _assign_particles_to_domains(self):
+		"""
+		Assigns a list of particles that are in each domain to the list of domains.
+		"""
+		for domain in self.domains:
+			domain.particles = []
+			for particle in self.particles:
+				if domain.contains(particle):
+					domain.particles.append(particle)
+					
+
 	def _has_a_particle_at(self,pos):
 		"""
 		Checks whether a particle alread exists at a certain position.
@@ -258,7 +351,7 @@ class System(object):
 			if distance <= particle.radius*2:
 				return True
 		return False
-		
+
 	def _random_particle(self,speed):
 		"""
 		Function to create a new random particle with a certain speed. 
@@ -268,14 +361,21 @@ class System(object):
 			Speed of random particle to be created
 		"""
 		l = self.container.length - self.particle_radius * 2
-		position = self.container.random_position_inside()
+		position = self._random_position_inside_system()
 		there_is = self._has_a_particle_at(position)
 		while there_is:
 			position = vector(l*random() - l/2, l*random() - l/2,l*random() - l/2)
 			there_is = self._has_a_particle_at(position)
-		velocity = speed * vector(1*random() - 0.5,1*random() - 0.5, 1*random() - 0.5)
+		velocity = speed * norm(vector(1*random() - 0.5,1*random() - 0.5, 1*random() - 0.5))
 		return Particle(pos = position, velocity = velocity, inverse_mass = self.inverse_mass, radius = self.particle_radius)
-	
+
+	def _random_position_inside_system(self):
+		"""
+		Finds a random position within the container.
+		"""
+		l = self.container.dimension - self.particle_radius
+		return vector(l*random() - l/2, l*random() - l/2,l*random() - l/2)
+
 	def _step_time(self,dt):
 		"""
 		Steps time forwards by dt. Only intended to be called by simulate()
@@ -287,7 +387,7 @@ class System(object):
 		for particle in self.particles:
 			particle.increment_by(particle.velocity*dt, vector(0,0,0))
 		self.steps += 1
-	
+
 	def _collision(self, particle_1, particle_2):
 		"""
 		Defines how to change velocities when two particles, particle_1 and particle_2 collide.
@@ -316,8 +416,8 @@ class System(object):
 		axis_1 = norm(particle_1.pos - particle_2.pos)
 		particle_2_v_after += axes[0] * (-1* u2_parallel_axis_1 + Z*2)
 		particle_2.velocity = particle_2_v_after
-		
-				
+
+
 	def _update_pressure(self,instantaneous_pressure):
 		"""
 		Updates pressure of system.
@@ -328,5 +428,18 @@ class System(object):
 		"""
 		self.pressure_history.append(instantaneous_pressure)
 		self.pressure = np.mean(self.pressure_history)
-			
-		
+
+
+	def _update_1d_velocities(self):
+		"""
+		Update the list of 1d-velocities of particles
+		"""
+		for index, particle in enumerate(self.particles):
+			self.one_d_velocities[index] = _element(particle.velocity, at = 0)
+
+	def _update_speeds(self):
+		"""
+		Update the list of 3d speeds of particles
+		"""
+		for index, particle in enumerate(self.particles):
+			self.speeds[index] = particle.velocity.mag
