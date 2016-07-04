@@ -1,0 +1,26 @@
+* Changing branchs
+git checkout <branch-name>
+
+* Updating a file on your branch
+git add <filename>
+git commit -m 'Commit Message'
+git push
+
+* Adding these changes to master (i.e. GitHub.com repo)
+- After having performed the steps above on your branch
+git checkout master
+git pull
+git merge <branch-name>
+git push origin master
+
+* List all new or modified files to be commited on current branch
+git status
+
+* To download a git repository, create a branch & move to it
+git clone <url>
+git branch <branch-name>
+git checkout <branch-name>
+
+* Updating your branch from master
+- Only do this once your modified files have been pushed to master
+git rebase
