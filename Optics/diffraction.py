@@ -1,14 +1,11 @@
-from matplotlib import pyplot as plt
-import numpy as np
-from scipy.integrate import dblquad,quad
 from shapes import *
-from PIL import Image
+from PIL import Image,ImageFilter
 from math import pi
-from mpl_toolkits.mplot3d import Axes3D
 
 from scipy import fftpack
 import numpy as np
-import pylab as py
+import matplotlib.pyplot as plt
+
 
 #do not change
 apertures=[]
@@ -113,7 +110,6 @@ class diffractionPattern:
             self.fraun=True
         else:
             self.fraun=False
-        self.isH=False
     def boundary(self):
         self.boundX=[]
         self.boundY=[]
@@ -128,12 +124,10 @@ class diffractionPattern:
                 maxY[1]=A.centre[1]+2.0*A.extentY
             if(A.centre[1]-2.0*A.extentY<=maxY[0]):
                 maxY[0]=A.centre[1]-2.0*A.extentY
-        self.mx=max(abs(i) for i in maxX)
-        self.my=max(abs(i) for i in maxY)
-        for i in range(0,int((2*self.mx)/dr)+1):
-            self.boundX.append(-abs(self.mx)+dr*i)
-        for i in range(0,int((2*self.my)/dr)+1):
-            self.boundY.append(-abs(self.my)+dr*i)
+        self.m=max(abs(i) for i in (maxX+maxY))
+        for i in range(0,int((2*self.m)/dr)+1):
+            self.boundX.append(-abs(self.m)+dr*i)
+            self.boundY.append(-abs(self.m)+dr*i)
 
     def apertureFunction(self):
         self.boundary()
@@ -158,10 +152,7 @@ class diffractionPattern:
                         pass
     
     def displayAperture(self): #problems away from (0,0) with cutting off of shapes
-        if(not self.isH):
-            self.apertureFunction()
-            isH=True
-        aperturePlane = Image.new( 'RGB', (len(DF.boundX),len(DF.boundY)), "black")
+        aperturePlane = Image.new( 'RGB', (len(self.boundX),len(self.boundY)), "black")
         pixels = aperturePlane.load()
         for i in range(aperturePlane.size[0]):
             for j in range(aperturePlane.size[1]):
@@ -170,15 +161,11 @@ class diffractionPattern:
                 except IndexError:
                     val=0.0
                 if(val!=0.0):
-                    pixels[i,j] = (255, 255, 255)
-        aperturePlane.show()
-        F1 = fftpack.fft2(aperturePlane)
-        F2 = fftpack.fftshift( F1 )
-        psf2D = np.abs( F2 )**2
-        py.figure(1)
-        py.clf()
-        py.imshow( psf2D )
-        py.show()
+                    pixels[i,j] = (255,255,255)
+        #aperturePlane.thumbnail((10*len(self.boundX),10*len(self.boundY)), Image.ANTIALIAS)
+        self.img=aperturePlane.convert('L')
+        aperturePlane.save('out.bmp')
+        #aperturePlane.show()
 
     def H(self,x,y):
         i=int(round((x+self.mx)/dr))
@@ -191,27 +178,34 @@ class diffractionPattern:
         else:
             return 0.0
 
-    def psi(x,y):
-        pass
+    def psi(self):
+        data=np.asarray(self.img.getdata()).reshape(self.img.size)
+        F1=np.fft.fft2(self.img)
+        F1[0,0]=0
+        F1=np.fft.fftshift(F1)
+        return F1
 
     def intensity(self,lightSrc):
         self.clr=lightSrc.clr
-        if(not self.isH):
-            self.apertureFunction()
-            isH=True
-        self.I=[]
-        self.I = [(255.0*x / max(self.I))%255 for x in self.I]
-SCREEN=screen(20,20,10,[0,0,0])
-SOURCE=lightSource([255,255,255])
-AP=aperture("Ellipse",[0,0],1,1,Rotate=0)
-#AP2=aperture("Rectangle",[0,2],2,2,Rotate=0)
-#AP3=aperture("Ellipse",[2,0],2,Rotate=0)
-apertures.append((AP))
-#apertures.append((AP2))
-#apertures.append((AP3))
-DF=diffractionPattern()
-DF.intensity(SOURCE)
-DF.displayAperture()
+        self.apertureFunction()
+        self.displayAperture()
+        self.I=np.abs(self.psi())**2
+        plt.imshow(self.I, interpolation='nearest')
+        plt.show()
+        #self.I = [(255.0*x / max(self.I))%255 for x in self.I]
+
+if __name__=="__main__":
+    SCREEN=screen(20,20,10,[0,0,0])
+    SOURCE=lightSource([255,255,255])
+    #AP=aperture("Rectangle",[0,0],0.1,4,Rotate=0)
+    #AP2=aperture("Rectangle",[4,4],2,2,Rotate=pi/6)
+    AP3=aperture("Ellipse",[0,0],1,Rotate=0)
+    apertures.append((AP3))
+    #apertures.append((AP2))
+    #apertures.append((AP))
+    DF=diffractionPattern()
+    DF.intensity(SOURCE)
+    DF.displayAperture()
 
 
 
