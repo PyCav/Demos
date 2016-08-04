@@ -7,6 +7,7 @@ from IPython.display import display
 import ipywidgets as widgets
 from ipywidgets import interact, FloatSlider
 
+import pycav.display as dis
 
 def rk4(R,V,a,h,ring_r,ring_steps,q):
 	# Function to time step using the Runge-Kutta 4th order algorithm
@@ -81,13 +82,9 @@ class Animation(object):
 		# Set up linspace for time in animation
 		self.time = np.linspace(0.0,self.h*self.N,int(self.N/self.N_output))
 
-	def create_plot(self,R_i,V_i):
-		# Records the initial position and velocity
-		self.R_i = R_i
-		self.V_i = V_i
-
+	def create_plot(self):
 		# Creates a figure which is twice as wide as it is tall
-		self.fig = plt.figure(figsize = plt.figaspect((0.5)))
+		self.fig = plt.figure(figsize = (9,4.5))
 
 		# First subplot - 3D plot which tracks the particle motion
 		self.ax1 = self.fig.add_subplot(1,2,1, projection='3d')
@@ -118,8 +115,6 @@ class Animation(object):
 		# Create lines to be later referenced for the 2 lines on the 2D plot
 		self.z1_plot = self.ax2.plot([0.0],[z_max],'b-')[0]
 		self.z2_plot = self.ax2.plot([0.0],[z_max],'r-')[0]
-        
-		plt.show()
 
 	def draw_ring(self):
 		# Draws equally spaced in angle sections of the ring
@@ -129,14 +124,18 @@ class Animation(object):
 			y = self.ring_r*np.sin(i*phi_h)
 			self.ax1.plot([x],[y],[0.0],'bo')
 
-	def create_sliders(self):
-		run_button = widgets.Button(description="Run (with new values)")
-		display(run_button)
-		run_button.on_click(self.mainloop)
+	def create_sliders(self,R_i,V_i):
+		# Records the initial position and velocity
+		self.R_i = R_i
+		self.V_i = V_i
 
-		trace_button = widgets.Button(description="Tracer On/Off")
-		display(trace_button)
-		trace_button.on_click(self.t_onoff)
+		self.run_button = widgets.Button(description="Run (with new values)")
+		display(self.run_button)
+		self.run_button.on_click(self.mainloop)
+
+		self.trace_button = widgets.Button(description="Tracer On/Off")
+		display(self.trace_button)
+		self.trace_button.on_click(self.t_onoff)
 
 		widgets.interact(self.q_update,val = FloatSlider(min=1000., max=10000., step=0.1, value=self.q, description='Charge Factor'))
 		widgets.interact(self.r_update,val = FloatSlider(min=0.01, max=1., step=0.001, value=self.R_i[2], description='Particle Height'))
@@ -179,22 +178,19 @@ class Animation(object):
 				# Plot z and SHM approx as functions of time
 				self.z1_plot.set_data(self.time[:frame_num],self.R[2,:frame_num])
 				self.z2_plot.set_data(self.time[:frame_num],self.R[2,0]*np.cos(self.shm_f*self.time[:frame_num]))
-		try:
-			# Halt previous animation after settings change
-			self.animate._stop()
-		except:
-			# First time around there will be no animation to terminate so catch exception
-			print('No FuncAnimation to stop')
+
 		# Create animation object which calls nextframe function in 100ms intervals
 		self.animate = anim.FuncAnimation(self.fig, nextframe, int(self.N/self.N_output), interval = 100, blit = False)
-		plt.show()
+		print('Run cell below to create animation inline')
 
 	def t_onoff(self,val):
 		# On button press, change values of trace bool
 		if self.trace:
 			self.trace = False
+			print('Tracer Off')
 		else:
 			self.trace = True
+			print('Tracer On')
 
 	def q_update(self,val):
 		# Slider value changes
@@ -204,6 +200,7 @@ class Animation(object):
 		self.R_i[2] = val
 
 	def mainloop(self,event):
+		self.create_plot()
 		print('Commencing RK4 routine...')
 		
 		R = np.zeros((3))

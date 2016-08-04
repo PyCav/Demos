@@ -1,0 +1,26 @@
+PEP naming:
+Objects - CamelCase
+Globals - prefix underscore
+Functions - lowercase with underscore 
+	-> Internal functions should be prefixed with underscore
+Constants - ALLCAPS
+
+
+General Practices:
+IMPORT STUFF
+
+FUNCTIONS
+
+OBJECTS
+
+if __name__ == main():
+	defined
+	
+	func1()
+	func2()
+
+
+Objects:
+GUI elements -> standard library for setting up buttons and jazz (ipywidgets)
+get properties involved (setters and getters)
+Line breaks and naming arguments
