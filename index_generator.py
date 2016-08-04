@@ -1,6 +1,5 @@
-import os
-import glob
-import re
+import os,glob,re
+
 notebooks=[]
 directories = glob.glob(os.getcwd()+'/**'+'/*.ipynb',recursive=True)
 names = []
@@ -35,13 +34,11 @@ for i in range(0,len(directories)):
 	areaofphys[i]=re.sub(r"(\w)([A-Z])", r"\1 \2", areaofphys[i])
 
 for i in range(0,len(directories)):
-	notebooks.append([names[i],areaofphys[i],descriptions[i],directories[i]])
-
-if iIndex!=None:
-	try:
-		del notebooks[iIndex]
-	except IndexError:
+	if names[i]=='':
 		pass
+	else:
+		notebooks.append([names[i],areaofphys[i],descriptions[i],directories[i]])
+
 notebooks.sort(key=lambda x: x[1])
 
 indexNotebook = open("indexf.ipynb",'w')
