@@ -41,7 +41,7 @@ for i in range(0,len(directories)):
 
 notebooks.sort(key=lambda x: x[1])
 
-indexNotebook = open("indexf.ipynb",'w')
+indexNotebook = open("indexgen.ipynb",'w')
 with open("./.indexraw.txt","r") as p:
 	lines=p.readlines()
 
