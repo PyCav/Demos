@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt 
 import matplotlib.animation as anim
 
-def run(height,width,viscosity,u0,N_t,N_rec,N_skip = 200,barrier_file = './Barriers/bow.dat'):
+def run(height,width,viscosity,u0,N_t,N_rec,N_skip = 200,barrier_file = './bow.dat'):
 	# "relaxation" parameter
 	omega = 1 / (3*viscosity + 0.5)
 	# abbreviations for lattice-Boltzmann weight factors
