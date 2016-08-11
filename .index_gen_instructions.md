@@ -1,5 +1,5 @@
 # Index Generator Readme
-Two files are required .indexraw.txt and index_generator.py which can be both be found at the 
+Two files are required .indexraw.txt and index_generator.py which can both be found at the 
 [server repo](https://github.com/pycav/server).
 
 Jupyter notebooks must be modified to contain the following lines somewhere inside if you want them to be included in the 
