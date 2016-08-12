@@ -1,0 +1,80 @@
+#NAME: Inline Animation Tutorial
+#DESCRIPTION: How to use Matplotlib Animations and PyCav.display for inline notebook animation
+
+#NAME: Charged Ring
+#DESCRIPTION: Charged particle above a oppositely charged fixed ring.
+
+#NAME: Coupled Points
+#DESCRIPTION: Interactive 3D simulation of systems of particles and springs.
+
+#NAME: Simple Pendulum
+#DESCRIPTION: Plots the displacement energy and phasor for a simple pendulum.
+
+#NAME: Integration Methods
+#DESCRIPTION: Investigation of different numerical integration techniques and their stability in dynamics simulations.
+
+#NAME: Orbits
+#DESCRIPTION: Interactive (gravitational) orbit simulation.
+
+#NAME: Potential Flow
+#DESCRIPTION: Potential flow of an irrotational perfect fluid.
+
+#NAME: Harmonic Linear Chain
+#DESCRIPTION: Solving the eigenvalue problem for masses in a harmonic linear chain.
+
+#NAME: Cherenkov Radiation
+#DESCRIPTION: Investigating the radiation produced by a particle moving faster than light in a medium.
+
+#NAME: Lattice Boltzmann Method
+#DESCRIPTION: Fluid dynamics simulation using a Lattice Boltzmann Method.
+
+#NAME: Fourier Series
+#DESCRIPTION: Creating a Fourier series for a function with period 2L.
+
+#NAME: Wigner Semicircle
+#DESCRIPTION: Investigating the distribution of eigenvalues for real symmetric matrices.
+
+#NAME: Caustics
+#DESCRIPTION: ...
+
+#NAME: Dispersion
+#DESCRIPTION: ...
+
+#NAME: Reflectionless Potential (1D)
+#DESCRIPTION: Investigating the reflectionless potential in 1D using the split-step algorithm.
+
+#NAME: Non-Linear Schrödinger Equation
+#DESCRIPTION: Solving the 1D time-dependent non-linear Schrödinger equation using the split step method.
+
+#NAME: Schrödinger Equation
+#DESCRIPTION: Solving the 1D time dependent Schrödinger Equation using the split step method.
+
+#NAME: Crystal Growth
+#DESCRIPTION: Statistical mechanics model of the growth of a crystal.
+
+#NAME: Ising Model
+#DESCRIPTION: 2D Ising Ferromagnet nearest neighbour interactions.
+
+#NAME: Dynamic Ising Model
+#DESCRIPTION: Glauber dynamics of the Ising model.
+
+#NAME: Bateman Equation
+#DESCRIPTION: Radioactive decay chains and the Bateman equation.
+
+#NAME: Kinetic Theory of Gases
+#DESCRIPTION: Collisional and collisionless gases within a confined volume macroscopic properties e.g. pressure observed.
+
+#NAME: 1D Velocity Distributions
+#DESCRIPTION: Finding the 1D velocity distributions predicted by kinetic gas theory through simulation of hard spheres.
+
+#NAME: Foldy-Lax Formulation
+#DESCRIPTION: Calculating the wavefield around isotropic scatterers using the Foldy-Lax formulation.
+
+#NAME: Waves in the Steady State
+#DESCRIPTION: Solving the Helmholtz equation to find the electric field strength in the steady state.
+
+#NAME: Wave Equation
+#DESCRIPTION: Numerically solving the wave equation in 1D and 2D.
+
+#NAME: Resonance
+#DESCRIPTION: Simulating resonance for a particle connected to a spring that is fixed to a wall.
