@@ -54,7 +54,7 @@ def E_field(z_lim,z_step,q,ring_r):
 	
 	E_z = -(q/(4*np.pi))*z*(ring_r**2+z**2)**(-1.5)
 
-	fig_E = plt.figure()
+	fig_E = plt.figure(figsize = (12,12))
 	plt.plot(z,E_z,'b-')
 	plt.plot(z,-shm_freq(ring_r,q)**2*z,'r-')
 	plt.xlim([np.min(z),np.max(z)])
